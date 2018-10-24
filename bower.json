@@ -1,0 +1,30 @@
+{
+  "name": "purescript-ssh2-sftp-client",
+  "authors": [
+    "Michał Adamczyk <michal.anks@gmail.com>"
+  ],
+  "description": "Set of bindings to npm's ssh2-sftp-client.",
+  "keywords": [
+    "sftp",
+    "ssh",
+    "ssh2",
+    "client",
+    "purescript",
+    "bsd3"
+  ],
+  "license": "BSD-3",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-prelude": "^4.1.0",
+    "purescript-console": "^4.1.0",
+    "purescript-effect": "^2.0.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^4.0.0"
+  }
+}
