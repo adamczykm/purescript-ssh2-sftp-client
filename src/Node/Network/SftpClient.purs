@@ -1,4 +1,16 @@
-module Node.Network.SftpClient where
+module Node.Network.SftpClient
+  ( module InternalExported
+  , SftpSessionM
+  , runSftpSession
+  , list
+  , rmdir
+  , mkdir
+  , rename
+  , delete
+  , chmod
+  , fastGet
+  , fastPut
+  ) where
 
 import Control.Alt (class Alt)
 import Control.Applicative (class Applicative, pure)
@@ -19,8 +31,9 @@ import Effect.Aff (Aff, Error, bracket)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (class MonadEffect)
-import Node.Network.SftpClient.Internal (Config, SftpClientRef, FileInfo)
-import Node.Network.SftpClient.Internal as Internal
+import Node.Network.SftpClient.UnsafeInternal (Config, FileInfo) as InternalExported
+import Node.Network.SftpClient.UnsafeInternal (Config, SftpClientRef, FileInfo)
+import Node.Network.SftpClient.UnsafeInternal as UnsafeInternal
 
 newtype SftpSessionM a = SftpSessionM (ReaderT SftpClientRef Aff a)
 
@@ -53,31 +66,31 @@ runSftpSession config (SftpSessionM connectedSession) = bracket
 
   where
     acquireConnection cfg =
-      let ref = Internal.unsafeCreateNewClient unit
-      in fromEffectFnAff (Internal.connect cfg ref) *> pure ref
+      let ref = UnsafeInternal.unsafeCreateNewClient unit
+      in fromEffectFnAff (UnsafeInternal.connect cfg ref) *> pure ref
 
-    releaseConnection ref = fromEffectFnAff (Internal.end ref)
+    releaseConnection ref = fromEffectFnAff (UnsafeInternal.end ref)
 
 list ∷ String → SftpSessionM (Array FileInfo)
-list = unsafeFromRefFnAff <<< Internal.list
+list = unsafeFromRefFnAff <<< UnsafeInternal.list
 
 rmdir ∷ { path ∷ String, recursive ∷ Boolean} → SftpSessionM Unit
-rmdir = unsafeFromRefFnAff <<< Internal.rmdir
+rmdir = unsafeFromRefFnAff <<< UnsafeInternal.rmdir
 
 mkdir ∷ { path ∷ String, recursive ∷ Boolean}  → SftpSessionM Unit
-mkdir = unsafeFromRefFnAff <<< Internal.mkdir
+mkdir = unsafeFromRefFnAff <<< UnsafeInternal.mkdir
 
 rename ∷ {from ∷ String, to ∷ String } → SftpSessionM Unit
-rename = unsafeFromRefFnAff <<< Internal.rename
+rename = unsafeFromRefFnAff <<< UnsafeInternal.rename
 
 delete ∷ String → SftpSessionM Unit
-delete = unsafeFromRefFnAff <<< Internal.delete
+delete = unsafeFromRefFnAff <<< UnsafeInternal.delete
 
-chmod ∷ {dest ∷ String, mode ∷ String } → SftpSessionM Unit
-chmod = unsafeFromRefFnAff <<< Internal.chmod
+chmod ∷ { dest ∷ String, mode ∷ String } → SftpSessionM Unit
+chmod = unsafeFromRefFnAff <<< UnsafeInternal.chmod
 
-fastGet ∷ {remote ∷ String, local ∷ String } → SftpSessionM Unit
-fastGet = unsafeFromRefFnAff <<< Internal.fastGet
+fastGet ∷ { remote ∷ String, local ∷ String } → SftpSessionM Unit
+fastGet = unsafeFromRefFnAff <<< UnsafeInternal.fastGet
 
-fastPut ∷ {remote ∷ String, local ∷ String } → SftpSessionM Unit
-fastPut = unsafeFromRefFnAff <<< Internal.fastPut
+fastPut ∷ { remote ∷ String, local ∷ String } → SftpSessionM Unit
+fastPut = unsafeFromRefFnAff <<< UnsafeInternal.fastPut

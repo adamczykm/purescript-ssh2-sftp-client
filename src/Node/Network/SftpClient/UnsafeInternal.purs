@@ -1,5 +1,6 @@
-module Node.Network.SftpClient.Internal where
+module Node.Network.SftpClient.UnsafeInternal where
 
+-- import Data.Eq (class Eq)
 import Data.Unit (Unit)
 import Effect.Aff.Compat (EffectFnAff)
 
@@ -25,7 +26,10 @@ type FileInfo =
   , group ∷ Int -- group ID
 }
 
+-- data PutSource
+--   = LocalPath String
 
+-- derive instance eqPutSource ∷ Eq PutSource
 
 
 
