@@ -3,11 +3,11 @@ module Node.Network.SftpClient where
 import Control.Alt (class Alt)
 import Control.Applicative (class Applicative, pure)
 import Control.Apply (class Apply, (*>))
-import Control.Bind (class Bind, bind, (=<<), (>>=))
+import Control.Bind (class Bind, (=<<))
 import Control.Category ((<<<))
 import Control.Monad (class Monad)
 import Control.Monad.Error.Class (class MonadError, class MonadThrow)
-import Control.Monad.Reader (ReaderT(..), ask, lift, runReaderT)
+import Control.Monad.Reader (ReaderT, ask, lift, runReaderT)
 import Control.Monad.Rec.Class (class MonadRec)
 import Control.MonadPlus (class Plus)
 import Data.Function (($))
@@ -15,7 +15,7 @@ import Data.Functor (class Functor)
 import Data.Monoid (class Monoid)
 import Data.Semigroup (class Semigroup)
 import Data.Unit (Unit, unit)
-import Effect.Aff (Aff, Error)
+import Effect.Aff (Aff, Error, bracket)
 import Effect.Aff.Class (class MonadAff)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (class MonadEffect)
@@ -39,22 +39,45 @@ derive newtype instance monadAffSftpSessionM ∷ MonadAff SftpSessionM
 derive newtype instance monadErrorSftpSessionM ∷ MonadError Error SftpSessionM
 derive newtype instance monadThrowSftpSessionM ∷ MonadThrow Error SftpSessionM
 
-fromRefFnAff ∷ ∀ a. (SftpClientRef → EffectFnAff a) → SftpSessionM a
-fromRefFnAff affFn = SftpSessionM $ lift <<< fromEffectFnAff <<< affFn =<< ask
+unsafeFromRefFnAff ∷ ∀ a. (SftpClientRef → EffectFnAff a) → SftpSessionM a
+unsafeFromRefFnAff affFn = SftpSessionM $ lift <<< fromEffectFnAff <<< affFn =<< ask
 
-runSftpSession ∷ forall a. Config → SftpSessionM a → Aff a
-runSftpSession config session =
-  let (SftpSessionM connectedSession) = connect config *> session
-  in runReaderT connectedSession (Internal.unsafeCreateNewClient unit)
+runSftpSession ∷ ∀ a. Config → SftpSessionM a → Aff a
+runSftpSession config (SftpSessionM connectedSession) = bracket
+  -- acquire resources
+  (acquireConnection config)
+  -- release resources
+  releaseConnection
+  -- run session
+  (runReaderT connectedSession)
 
-connect ∷ Config → SftpSessionM Unit
-connect config = fromRefFnAff $ Internal.connect config
+  where
+    acquireConnection cfg =
+      let ref = Internal.unsafeCreateNewClient unit
+      in fromEffectFnAff (Internal.connect cfg ref) *> pure ref
+
+    releaseConnection ref = fromEffectFnAff (Internal.end ref)
 
 list ∷ String → SftpSessionM (Array FileInfo)
-list directory = fromRefFnAff $ Internal.list directory
+list = unsafeFromRefFnAff <<< Internal.list
 
-rmdir ∷ String → Boolean → SftpSessionM Unit
-rmdir path recursive = fromRefFnAff $ Internal.rmdir path recursive
+rmdir ∷ { path ∷ String, recursive ∷ Boolean} → SftpSessionM Unit
+rmdir = unsafeFromRefFnAff <<< Internal.rmdir
 
-mkdir ∷ String → Boolean → SftpSessionM Unit
-mkdir path recursive = fromRefFnAff $ Internal.mkdir path recursive
+mkdir ∷ { path ∷ String, recursive ∷ Boolean}  → SftpSessionM Unit
+mkdir = unsafeFromRefFnAff <<< Internal.mkdir
+
+rename ∷ {from ∷ String, to ∷ String } → SftpSessionM Unit
+rename = unsafeFromRefFnAff <<< Internal.rename
+
+delete ∷ String → SftpSessionM Unit
+delete = unsafeFromRefFnAff <<< Internal.delete
+
+chmod ∷ {dest ∷ String, mode ∷ String } → SftpSessionM Unit
+chmod = unsafeFromRefFnAff <<< Internal.chmod
+
+fastGet ∷ {remote ∷ String, local ∷ String } → SftpSessionM Unit
+fastGet = unsafeFromRefFnAff <<< Internal.fastGet
+
+fastPut ∷ {remote ∷ String, local ∷ String } → SftpSessionM Unit
+fastPut = unsafeFromRefFnAff <<< Internal.fastPut
