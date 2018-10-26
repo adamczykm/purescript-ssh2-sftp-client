@@ -20,7 +20,14 @@ bower install purescript-ssh2-sftp-client
 
 ### Implementation status
 
-[TODO]
+Almost entire functionality of npm's ssh2-ftp-client is already implemented.
+Here is a list of not yet implemented stuff:
+
+- normal get operation (only fastGet is implemented)
+- normal put operation (only fastPut is implemented)
+- fastGet and fastPut don't take any configuration parameters.
+
+If you want to see them implemented let me know or consider doing it yourself and issueing a PR.
 
 ### Usage
 

@@ -12,7 +12,11 @@
     "purescript",
     "bsd3"
   ],
-  "license": "BSD-3",
+  "repository": {                                                           
+      "type": "git",                                                          
+      "url": "https://github.com/adamczykm/purescript-ssh2-sftp-client.git"   
+  },
+  "license": "BSD-3-Clause",
   "ignore": [
     "**/.*",
     "node_modules",
